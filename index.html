@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Цивилизации Minecraft</title>
+  <style>
+    :root {
+      --bg: #0B0B0F;
+      --text: #F5F7FB;
+      --muted: rgba(245, 247, 251, 0.68);
+      --soft: rgba(245, 247, 251, 0.12);
+      --line: rgba(255, 255, 255, 0.16);
+      --emerald: #28E89B;
+      --emerald-deep: #0E9F6E;
+      --discord: #5865F2;
+      --discord-deep: #404EED;
+      --panel: rgba(255, 255, 255, 0.08);
+      --panel-strong: rgba(255, 255, 255, 0.13);
+      --shadow: 0 28px 90px rgba(0, 0, 0, 0.55);
+      --radius-xl: 34px;
+      --radius-lg: 24px;
+      --radius-md: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      margin: 0;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      letter-spacing: 0;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: geometricPrecision;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button,
+    a {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .page {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      isolation: isolate;
+      opacity: 0;
+      transform: translateY(14px) scale(0.985);
+      animation: pageIn 900ms cubic-bezier(.2, .8, .2, 1) forwards;
+    }
+
+    .background {
+      position: absolute;
+      inset: 0;
+      z-index: -3;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 18% 16%, rgba(40, 232, 155, 0.18), transparent 28%),
+        radial-gradient(circle at 78% 12%, rgba(88, 101, 242, 0.22), transparent 32%),
+        radial-gradient(circle at 48% 96%, rgba(36, 174, 121, 0.14), transparent 35%),
+        linear-gradient(180deg, #101018 0%, #0B0B0F 48%, #07070A 100%);
+    }
+
+    .background::before {
+      content: "";
+      position: absolute;
+      inset: -25%;
+      background:
+        conic-gradient(from 120deg at 35% 45%, rgba(40, 232, 155, 0.18), transparent 18%, rgba(88, 101, 242, 0.16), transparent 42%, rgba(40, 232, 155, 0.12), transparent 70%),
+        radial-gradient(circle at 60% 40%, rgba(255, 255, 255, 0.07), transparent 24%);
+      filter: blur(48px);
+      opacity: 0.75;
+      animation: gradientDrift 18s ease-in-out infinite alternate;
+    }
+
+    .background::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: 0.28;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: radial-gradient(circle at 50% 45%, black, transparent 75%);
+    }
+
+    .landscape {
+      position: absolute;
+      left: 50%;
+      bottom: -7vh;
+      width: 118vw;
+      height: 34vh;
+      transform: translateX(-50%);
+      opacity: 0.26;
+      filter: blur(0.2px);
+      z-index: -2;
+      pointer-events: none;
+    }
+
+    .layer {
+      position: absolute;
+      right: -4vw;
+      bottom: 0;
+      left: -4vw;
+      height: 100%;
+      background-repeat: repeat-x;
+      background-position: bottom;
+      will-change: transform;
+    }
+
+    .layer.back {
+      opacity: 0.46;
+      background-size: 440px 140px;
+      background-image:
+        linear-gradient(to top, rgba(26, 51, 42, 0.9) 0 34px, transparent 34px),
+        linear-gradient(135deg, transparent 0 26%, rgba(37, 75, 61, 0.78) 26% 42%, transparent 42%),
+        linear-gradient(225deg, transparent 0 31%, rgba(25, 59, 49, 0.85) 31% 50%, transparent 50%);
+      animation: parallaxBack 26s ease-in-out infinite alternate;
+    }
+
+    .layer.front {
+      opacity: 0.72;
+      background-size: 180px 92px;
+      background-image:
+        linear-gradient(to top, rgba(9, 21, 18, 0.95) 0 34px, transparent 34px),
+        linear-gradient(to top, transparent 0 34px, rgba(16, 44, 36, 0.86) 34px 56px, transparent 56px),
+        linear-gradient(90deg, transparent 0 8%, rgba(21, 77, 58, 0.62) 8% 24%, transparent 24% 42%, rgba(20, 58, 49, 0.72) 42% 61%, transparent 61%);
+      animation: parallaxFront 18s ease-in-out infinite alternate;
+    }
+
+    .particles {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .particle {
+      position: absolute;
+      width: var(--size);
+      height: var(--size);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.72);
+      box-shadow: 0 0 20px rgba(40, 232, 155, 0.42);
+      opacity: 0.34;
+      transform: translate3d(0, 0, 0);
+      animation: floatParticle var(--duration) ease-in-out infinite alternate;
+      animation-delay: var(--delay);
+    }
+
+    .shell {
+      width: min(1160px, calc(100vw - 44px));
+      height: min(760px, calc(100vh - 44px));
+      display: grid;
+      grid-template-columns: minmax(0, 1.14fr) minmax(320px, 0.86fr);
+      gap: 34px;
+      align-items: center;
+      padding: 42px;
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      border-radius: 44px;
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.035)),
+        rgba(255, 255, 255, 0.035);
+      box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.13);
+      backdrop-filter: blur(26px) saturate(132%);
+      -webkit-backdrop-filter: blur(26px) saturate(132%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .shell::before {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      border-radius: 43px;
+      pointer-events: none;
+      background: linear-gradient(120deg, rgba(255,255,255,0.16), transparent 24%, transparent 70%, rgba(40,232,155,0.18));
+      mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      padding: 1px;
+      mask-composite: exclude;
+      -webkit-mask-composite: xor;
+    }
+
+    .left {
+      position: relative;
+      max-width: 630px;
+      z-index: 1;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 34px;
+      padding: 10px 14px 10px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.07);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10), 0 18px 36px rgba(0, 0, 0, 0.22);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .brand-mark,
+    .card-icon,
+    .social-icon {
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.75), transparent 18%),
+        linear-gradient(145deg, #31F1A7, #0E8F67);
+      box-shadow: 0 14px 36px rgba(40, 232, 155, 0.36);
+    }
+
+    .brand span {
+      font-size: 14px;
+      font-weight: 720;
+      color: rgba(255, 255, 255, 0.86);
+    }
+
+    h1 {
+      max-width: 760px;
+      margin: 0;
+      font-size: clamp(48px, 7vw, 86px);
+      line-height: 0.92;
+      letter-spacing: 0;
+      font-weight: 830;
+    }
+
+    .title-gradient {
+      display: block;
+      padding-bottom: 8px;
+      color: transparent;
+      background: linear-gradient(95deg, #FFFFFF 0%, #CFFFEA 38%, #28E89B 76%, #9CF5D4 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      filter: drop-shadow(0 18px 42px rgba(40, 232, 155, 0.18));
+    }
+
+    .subtitle {
+      width: min(590px, 100%);
+      margin: 24px 0 34px;
+      font-size: clamp(17px, 1.75vw, 21px);
+      line-height: 1.52;
+      color: var(--muted);
+    }
+
+    .cta-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .button {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 58px;
+      padding: 0 24px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 20px;
+      overflow: hidden;
+      color: white;
+      font-size: 16px;
+      font-weight: 760;
+      line-height: 1;
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+      transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+    }
+
+    .button::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      opacity: 0;
+      background: linear-gradient(110deg, transparent 0%, rgba(255, 255, 255, 0.24) 42%, transparent 58%);
+      transform: translateX(-85%);
+      transition: opacity 220ms ease;
+    }
+
+    .button:hover {
+      transform: translateY(-3px) scale(1.015);
+    }
+
+    .button:hover::before {
+      opacity: 1;
+      animation: buttonSweep 850ms ease;
+    }
+
+    .button svg {
+      position: relative;
+      width: 21px;
+      height: 21px;
+    }
+
+    .button span {
+      position: relative;
+      white-space: nowrap;
+    }
+
+    .button.discord {
+      background:
+        radial-gradient(circle at 25% 0%, rgba(255, 255, 255, 0.28), transparent 30%),
+        linear-gradient(135deg, var(--discord), var(--discord-deep));
+      box-shadow: 0 22px 70px rgba(88, 101, 242, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.23);
+    }
+
+    .button.discord:hover {
+      box-shadow: 0 26px 82px rgba(88, 101, 242, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    }
+
+    .button.emerald {
+      background:
+        radial-gradient(circle at 25% 0%, rgba(255, 255, 255, 0.32), transparent 31%),
+        linear-gradient(135deg, var(--emerald), var(--emerald-deep));
+      color: #04130E;
+      box-shadow: 0 22px 70px rgba(40, 232, 155, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    }
+
+    .button.emerald:hover {
+      box-shadow: 0 26px 82px rgba(40, 232, 155, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.32);
+    }
+
+    .note {
+      width: min(560px, 100%);
+      margin: 18px 0 0;
+      color: rgba(245, 247, 251, 0.54);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .right {
+      display: grid;
+      gap: 18px;
+      z-index: 1;
+    }
+
+    .card {
+      position: relative;
+      padding: 26px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.052)),
+        var(--panel);
+      box-shadow: 0 22px 58px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+      backdrop-filter: blur(22px) saturate(145%);
+      -webkit-backdrop-filter: blur(22px) saturate(145%);
+      transform: translateZ(0);
+      transition: transform 240ms ease, border-color 240ms ease, background 240ms ease, box-shadow 240ms ease;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      top: -38%;
+      right: -22%;
+      width: 220px;
+      height: 220px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(40, 232, 155, 0.18), transparent 68%);
+      pointer-events: none;
+    }
+
+    .card:hover {
+      transform: translateY(-5px) scale(1.018);
+      border-color: rgba(255, 255, 255, 0.24);
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.065)),
+        var(--panel-strong);
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+
+    .card-head {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      margin-bottom: 16px;
+    }
+
+    .card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+
+    .card-icon.emerald {
+      color: var(--emerald);
+      box-shadow: 0 16px 38px rgba(40, 232, 155, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+
+    .card-icon.blue {
+      color: #9FA8FF;
+      box-shadow: 0 16px 38px rgba(88, 101, 242, 0.13), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+
+    .card-icon svg,
+    .brand-mark svg,
+    .social-icon svg {
+      width: 24px;
+      height: 24px;
+      stroke-width: 2;
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.12;
+      letter-spacing: 0;
+    }
+
+    .card p {
+      margin: 0 0 22px;
+      color: rgba(245, 247, 251, 0.66);
+      font-size: 15px;
+      line-height: 1.55;
+    }
+
+    .card .button {
+      width: 100%;
+    }
+
+    .social-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 2px;
+    }
+
+    .social {
+      display: flex;
+      min-height: 86px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.07);
+      color: rgba(255, 255, 255, 0.86);
+      font-weight: 730;
+      font-size: 13px;
+      transition: transform 210ms ease, background 210ms ease, border-color 210ms ease, box-shadow 210ms ease;
+    }
+
+    .social:hover {
+      transform: translateY(-4px);
+      background: rgba(255, 255, 255, 0.11);
+      border-color: rgba(255, 255, 255, 0.22);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.32);
+    }
+
+    .social-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .social.discord-link .social-icon {
+      color: #9FA8FF;
+      background: rgba(88, 101, 242, 0.18);
+    }
+
+    .social.youtube-link .social-icon {
+      color: #FF6B6B;
+      background: rgba(255, 70, 70, 0.14);
+    }
+
+    .social.tiktok-link .social-icon {
+      color: #56F2EA;
+      background: rgba(86, 242, 234, 0.12);
+    }
+
+    @media (max-width: 900px) {
+      .shell {
+        width: min(720px, calc(100vw - 28px));
+        height: min(820px, calc(100vh - 28px));
+        grid-template-columns: 1fr;
+        gap: 22px;
+        padding: 28px;
+      }
+
+      .left {
+        max-width: none;
+      }
+
+      .brand {
+        margin-bottom: 22px;
+      }
+
+      h1 {
+        font-size: clamp(40px, 10vw, 66px);
+      }
+
+      .subtitle {
+        margin: 18px 0 24px;
+        font-size: 16px;
+      }
+
+      .note {
+        margin-top: 13px;
+      }
+
+      .right {
+        gap: 14px;
+      }
+
+      .card {
+        padding: 20px;
+        border-radius: 28px;
+      }
+
+      .card p {
+        margin-bottom: 16px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .shell {
+        width: calc(100vw - 18px);
+        height: calc(100vh - 18px);
+        height: calc(100dvh - 18px);
+        padding: 16px;
+        border-radius: 30px;
+        align-content: center;
+        gap: 14px;
+      }
+
+      .brand {
+        gap: 9px;
+        padding: 8px 12px 8px 8px;
+        margin-bottom: 14px;
+      }
+
+      .brand-mark {
+        width: 36px;
+        height: 36px;
+        border-radius: 14px;
+      }
+
+      .brand span {
+        font-size: 13px;
+      }
+
+      h1 {
+        font-size: clamp(34px, 11vw, 48px);
+        line-height: 0.96;
+      }
+
+      .subtitle {
+        margin: 12px 0 14px;
+        font-size: 13.5px;
+        line-height: 1.38;
+      }
+
+      .button {
+        width: 100%;
+        min-height: 48px;
+        border-radius: 17px;
+        font-size: 14px;
+      }
+
+      .note {
+        margin-top: 10px;
+        font-size: 11.8px;
+        line-height: 1.35;
+      }
+
+      .right {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .card {
+        padding: 12px;
+        border-radius: 22px;
+      }
+
+      .card-head {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .card-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 13px;
+      }
+
+      .card h2 {
+        font-size: 16px;
+        line-height: 1.08;
+      }
+
+      .card p {
+        font-size: 11.8px;
+        line-height: 1.34;
+        margin-bottom: 10px;
+      }
+
+      .card .button {
+        min-height: 44px;
+        padding: 0 10px;
+        font-size: 12.5px;
+      }
+
+      .social-grid {
+        gap: 5px;
+      }
+
+      .social {
+        min-height: 54px;
+        border-radius: 15px;
+        font-size: 10px;
+        gap: 5px;
+      }
+
+      .social-icon {
+        width: 26px;
+        height: 26px;
+        border-radius: 11px;
+      }
+
+      .social-icon svg,
+      .card-icon svg {
+        width: 19px;
+        height: 19px;
+      }
+    }
+
+    @media (max-height: 680px) and (min-width: 760px) {
+      .shell {
+        height: calc(100vh - 28px);
+        padding: 30px;
+      }
+
+      .brand {
+        margin-bottom: 22px;
+      }
+
+      h1 {
+        font-size: clamp(46px, 6.6vw, 72px);
+      }
+
+      .subtitle {
+        margin: 18px 0 24px;
+      }
+
+      .card {
+        padding: 22px;
+      }
+    }
+
+    @keyframes pageIn {
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes gradientDrift {
+      0% {
+        transform: translate3d(-2%, -1%, 0) rotate(0deg) scale(1);
+      }
+      100% {
+        transform: translate3d(3%, 2%, 0) rotate(10deg) scale(1.08);
+      }
+    }
+
+    @keyframes parallaxBack {
+      from {
+        transform: translate3d(-14px, 0, 0);
+      }
+      to {
+        transform: translate3d(18px, -7px, 0);
+      }
+    }
+
+    @keyframes parallaxFront {
+      from {
+        transform: translate3d(18px, 0, 0);
+      }
+      to {
+        transform: translate3d(-22px, -5px, 0);
+      }
+    }
+
+    @keyframes floatParticle {
+      from {
+        transform: translate3d(0, 0, 0) scale(0.9);
+      }
+      to {
+        transform: translate3d(var(--x), var(--y), 0) scale(1.22);
+      }
+    }
+
+    @keyframes buttonSweep {
+      from {
+        transform: translateX(-85%);
+      }
+      to {
+        transform: translateX(85%);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page" aria-label="Лендинг сервера Цивилизации Minecraft">
+    <div class="background" aria-hidden="true"></div>
+    <div class="landscape" aria-hidden="true">
+      <div class="layer back"></div>
+      <div class="layer front"></div>
+    </div>
+    <div class="particles" id="particles" aria-hidden="true"></div>
+
+    <section class="shell" id="shell">
+      <div class="left">
+        <a class="brand" href="#" aria-label="Цивилизации Minecraft">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M12 21.2a9.2 9.2 0 1 0 0-18.4 9.2 9.2 0 0 0 0 18.4Z" stroke="currentColor" />
+              <path d="M3.3 9.5h17.4M3.3 14.5h17.4M12 2.8c2.1 2.2 3.2 5.3 3.2 9.2s-1.1 7-3.2 9.2M12 2.8C9.9 5 8.8 8.1 8.8 12s1.1 7 3.2 9.2" stroke="currentColor" />
+            </svg>
+          </span>
+          <span>Цивилизации Minecraft</span>
+        </a>
+
+        <h1>
+          Цивилизации
+          <span class="title-gradient">Minecraft</span>
+        </h1>
+
+        <p class="subtitle">
+          Создай своё государство, заключай союзы, объявляй войны и измени историю мира вместе с другими игроками.
+        </p>
+
+        <div class="cta-row">
+          <a class="button discord" data-link="discord" href="#" aria-label="Вступить в Discord">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M8.2 8.9c2.5-.8 5.1-.8 7.6 0M9.2 15.1c1.9.7 3.7.7 5.6 0" stroke="currentColor" stroke-linecap="round" />
+              <path d="M8.4 17.8c-1.4.4-2.5.1-3.4-.5-1.1-2.8-1-5.6.2-8.4 1.1-.8 2.2-1.3 3.4-1.5l.7 1.3M15.6 17.8c1.4.4 2.5.1 3.4-.5 1.1-2.8 1-5.6-.2-8.4-1.1-.8-2.2-1.3-3.4-1.5l-.7 1.3" stroke="currentColor" stroke-linejoin="round" />
+              <path d="M9.4 13.2h.1M14.5 13.2h.1" stroke="currentColor" stroke-linecap="round" stroke-width="3" />
+            </svg>
+            <span>Вступить в Discord</span>
+          </a>
+        </div>
+
+        <p class="note">
+          Все новости, дата старта, правила, поиск команды и ответы на вопросы находятся в Discord.
+        </p>
+      </div>
+
+      <aside class="right" aria-label="Заявка и социальные сети">
+        <article class="card">
+          <div class="card-head">
+            <span class="card-icon emerald" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M8 4.5h8M9 3h6l1 2.5H8L9 3Z" stroke="currentColor" stroke-linejoin="round" />
+                <path d="M7 5.5H5.8A1.8 1.8 0 0 0 4 7.3v11.9A1.8 1.8 0 0 0 5.8 21h12.4a1.8 1.8 0 0 0 1.8-1.8V7.3a1.8 1.8 0 0 0-1.8-1.8H17" stroke="currentColor" />
+                <path d="M8 11h8M8 15h5" stroke="currentColor" stroke-linecap="round" />
+              </svg>
+            </span>
+            <h2>Подать заявку</h2>
+          </div>
+          <p>Хочешь принять участие? Заполни анкету и стань частью истории.</p>
+          <a class="button emerald" data-link="application" href="#" aria-label="Подать заявку">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span>Подать заявку</span>
+          </a>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <span class="card-icon blue" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M12 21.2a9.2 9.2 0 1 0 0-18.4 9.2 9.2 0 0 0 0 18.4Z" stroke="currentColor" />
+                <path d="M3.4 9.4h17.2M3.4 14.6h17.2M12 2.8c2 2.3 3 5.3 3 9.2s-1 6.9-3 9.2M12 2.8c-2 2.3-3 5.3-3 9.2s1 6.9 3 9.2" stroke="currentColor" />
+              </svg>
+            </span>
+            <h2>Наши соцсети</h2>
+          </div>
+
+          <div class="social-grid">
+            <a class="social discord-link" data-link="discord" href="#" aria-label="Discord">
+              <span class="social-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M8.2 8.9c2.5-.8 5.1-.8 7.6 0M9.2 15.1c1.9.7 3.7.7 5.6 0" stroke="currentColor" stroke-linecap="round" />
+                  <path d="M8.4 17.8c-1.4.4-2.5.1-3.4-.5-1.1-2.8-1-5.6.2-8.4 1.1-.8 2.2-1.3 3.4-1.5l.7 1.3M15.6 17.8c1.4.4 2.5.1 3.4-.5 1.1-2.8 1-5.6-.2-8.4-1.1-.8-2.2-1.3-3.4-1.5l-.7 1.3" stroke="currentColor" stroke-linejoin="round" />
+                  <path d="M9.4 13.2h.1M14.5 13.2h.1" stroke="currentColor" stroke-linecap="round" stroke-width="3" />
+                </svg>
+              </span>
+              Discord
+            </a>
+            <a class="social youtube-link" data-link="youtube" href="#" aria-label="YouTube">
+              <span class="social-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M21 12s0-3.1-.4-4.6a2.5 2.5 0 0 0-1.8-1.8C17.2 5.2 12 5.2 12 5.2s-5.2 0-6.8.4a2.5 2.5 0 0 0-1.8 1.8C3 8.9 3 12 3 12s0 3.1.4 4.6a2.5 2.5 0 0 0 1.8 1.8c1.6.4 6.8.4 6.8.4s5.2 0 6.8-.4a2.5 2.5 0 0 0 1.8-1.8c.4-1.5.4-4.6.4-4.6Z" stroke="currentColor" stroke-linejoin="round" />
+                  <path d="m10.4 9.3 4.2 2.7-4.2 2.7V9.3Z" fill="currentColor" />
+                </svg>
+              </span>
+              YouTube
+            </a>
+            <a class="social tiktok-link" data-link="tiktok" href="#" aria-label="TikTok">
+              <span class="social-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M14.4 3v11.2a4.2 4.2 0 1 1-4.2-4.2c.4 0 .8.1 1.1.2v3.1a1.7 1.7 0 1 0 1.7 1.7V3h3.1c.4 2.2 1.8 3.7 4 4.2v3.1c-2.3-.1-4.2-1-5.7-2.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+              TikTok
+            </a>
+          </div>
+        </article>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const LINKS = {
+      discord: "https://discord.gg/XGQYSSCcQ",
+      application: "https://docs.google.com/forms/d/e/1FAIpQLSdXTRahVL2CRZiP5s4Wqsd7k7U58T43wpARdMRxk5REYcXQFg/viewform?usp=header",
+      youtube: "https://www.youtube.com/@DIAMOND-hc1cj/shorts",
+      tiktok: "https://www.tiktok.com/@frachfdv"
+    };
+
+    const particles = document.getElementById("particles");
+    const shell = document.getElementById("shell");
+
+    // Small randomized particles keep the page alive without stealing attention.
+    for (let index = 0; index < 34; index += 1) {
+      const particle = document.createElement("span");
+      const size = Math.random() * 2.8 + 1.4;
+
+      particle.className = "particle";
+      particle.style.left = `${Math.random() * 100}%`;
+      particle.style.top = `${Math.random() * 100}%`;
+      particle.style.setProperty("--size", `${size}px`);
+      particle.style.setProperty("--x", `${Math.random() * 72 - 36}px`);
+      particle.style.setProperty("--y", `${Math.random() * 86 - 43}px`);
+      particle.style.setProperty("--duration", `${Math.random() * 7 + 7}s`);
+      particle.style.setProperty("--delay", `${Math.random() * -9}s`);
+      particles.appendChild(particle);
+    }
+
+    // Assign links from one place and prevent placeholder navigation.
+    document.querySelectorAll("[data-link]").forEach((element) => {
+      const key = element.dataset.link;
+      element.href = LINKS[key] || "#";
+      element.target = "_blank";
+      element.rel = "noopener noreferrer";
+
+      element.addEventListener("click", (event) => {
+        if (!LINKS[key] || LINKS[key].includes("your-")) {
+          event.preventDefault();
+        }
+      });
+    });
+
+    // Restrained parallax for a polished glass surface.
+    window.addEventListener("pointermove", (event) => {
+      const x = event.clientX / window.innerWidth - 0.5;
+      const y = event.clientY / window.innerHeight - 0.5;
+
+      shell.style.transform = `perspective(1400px) rotateX(${y * -2.2}deg) rotateY(${x * 2.6}deg)`;
+    });
+
+    window.addEventListener("pointerleave", () => {
+      shell.style.transform = "";
+    });
+  </script>
+</body>
+</html>
